@@ -13,8 +13,8 @@ Below is the identification table of our team members along with their correspon
 | STT | Full Name | Student ID | GitHub Account ID | Role |
 | :---: | :--- | :---: | :---: | :--- |
 | 1 | **Huỳnh Nhật Khánh** | 084206002176 | `semiprofan` | Team Leader / Core Network Dev |
-| 2 | [**Nhật Tiến**] | [MSSV SV 2] | `[Username_Git_2]` | GUI & UX Designer |
-| 3 | [**Tiến Đạt**] | [MSSV SV 3] | `[Username_Git_3]` | Database & Test Engineer |
+| 2 | [**Nhật Tiến**] | 058206003922 | `tienpdn3922-lgtm` | GUI & UX Designer |
+| 3 | [**Tiến Đạt**] | 19h1120046 | `19h1120046-beep` | Database & Test Engineer |
 
 * **Project Repository:** [https://github.com/semiprofan/GR12---LTMang](https://github.com/semiprofan/GR12---LTMang)
 
