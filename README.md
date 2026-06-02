@@ -12,11 +12,11 @@ Below is the identification table of our team members along with their correspon
 
 | STT | Full Name | Student ID | GitHub Account ID | Role & Responsibilities |
 | :---: | :--- | :---: | :--- | :--- |
-| 1 | HUỲNH NHẬT KHÁNH | [084206002176] | `semiprofan` | Team Leader / Server Backend Dev |
-| 2 | [PHAN ĐIỀN NHẬT TIẾN] | [058206003922] | `[tienpdn3922-lgtm]` | Client UI/UX Designer |
-| 3 | [ĐÀO TIẾN ĐẠT] | [19h1120046] | `[19h1120046-beep]` | Client Network Logic Dev |
-| 4 | [BÙI THANH HÒA] | `051206011215` | `Thanhhoa066` | Database & History Dev |
-| 5 | [NGUYỄN MINH PHÚ] | `084205002407` | `Phunguyen4i4o` | QA, Tester & Documentation |
+| 1 | HUỲNH NHẬT KHÁNH | 084206002176 | `semiprofan` | Team Leader / Server Backend Dev |
+| 2 | PHAN ĐIỀN NHẬT TIẾN | 058206003922 | `[tienpdn3922-lgtm]` | Client UI/UX Designer |
+| 3 | ĐÀO TIẾN ĐẠT | 19h1120046 | `[19h1120046-beep]` | Client Network Logic Dev |
+| 4 | BÙI THANH HÒA | `051206011215` | `Thanhhoa066` | Database & History Dev |
+| 5 | NGUYỄN MINH PHÚ | `084205002407` | `Phunguyen4i4o` | QA, Tester & Documentation |
 
 * **Project Repository:** [https://github.com/semiprofan/GR12---LTMang](https://github.com/semiprofan/GR12---LTMang)
 
