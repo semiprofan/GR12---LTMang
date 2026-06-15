@@ -1,0 +1,3 @@
+C:\Users\ASUS\Downloads\GR12---LTMang-main\GR12---LTMang-main\Code\ChatClient\obj\Debug\net8.0-windows\MainWindow.g.cs
+C:\Users\ASUS\Downloads\GR12---LTMang-main\GR12---LTMang-main\Code\ChatClient\obj\Debug\net8.0-windows\ChatClient_MarkupCompile.cache
+C:\Users\ASUS\Downloads\GR12---LTMang-main\GR12---LTMang-main\Code\ChatClient\obj\Debug\net8.0-windows\ChatClient_MarkupCompile.lref
