@@ -1,85 +1,102 @@
 ﻿using System;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading;
 using System.Windows;
+using System.Windows.Input;
 
 namespace ChatClient
 {
     public partial class MainWindow : Window
     {
-        private ChatClientLogic _clientLogic = new ChatClientLogic();
+        TcpClient client;
+        NetworkStream stream;
 
         public MainWindow()
         {
             InitializeComponent();
-            _clientLogic.OnPacketReceived += ClientLogic_OnPacketReceived;
-            this.Loaded += MainWindow_Loaded;
+            Connect();
         }
 
-        private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        // ================= CONNECT SERVER =================
+        void Connect()
         {
-            // Kết nối tới Server (Hãy chắc chắn Server đã được chạy trước)
-            bool isConnected = await _clientLogic.ConnectAsync("127.0.0.1", 5000);
-            if (!isConnected)
+            try
             {
-                MessageBox.Show("Kết nối thất bại. Hãy chắc chắn bạn đã bật Server ở Terminal!");
+                client = new TcpClient();
+                client.Connect("127.0.0.1", 5000);
+
+                stream = client.GetStream();
+
+                Thread t = new Thread(Receive);
+                t.IsBackground = true;
+                t.Start();
+            }
+            catch
+            {
+                MessageBox.Show("Không kết nối được Server!");
             }
         }
 
-        // Xử lý khi nhận được tin nhắn từ Server truyền về
-
-        // Xử lý sự kiện khi nhấn nút "Gửi tin"
-        
-        private async void btnSend_Click(object sender, RoutedEventArgs e)
-{
-    string messageContent = txtMessage.Text.Trim();
-    string username = txtUsername.Text.Trim();
-
-    if (!string.IsNullOrEmpty(messageContent))
-    {
-        // 1. Tạo gói tin theo cấu trúc chuẩn chung của nhóm
-        NetworkPacket packet = new NetworkPacket
+        // ================= NHẬN TIN NHẮN =================
+        void Receive()
         {
-            Type = "CHAT",
-            Sender = username,
-            Content = messageContent
-        };
+            byte[] buffer = new byte[1024];
 
-        // 2. Chuyển đối tượng gói tin sang mảng byte nhờ hàm bổ trợ vừa sửa ở bước 1
-        byte[] dataToSend = packet.Serialize();
-
-        // 3. Gọi hàm truyền dữ liệu của đối tượng _clientLogic xuống tầng mạng Socket
-        // Bạn thay hàm SendPacketAsync bằng tên hàm gửi mảng byte thực tế trong file ChatClientLogic.cs của bạn nhé
-        await _clientLogic.SendPacketAsync(dataToSend); 
-
-        // 4. Xóa sạch ô nhập văn bản để sẵn sàng cho tin nhắn tiếp theo
-        txtMessage.Text = "";
-    }
-}
-        // 1. Thêm hàm xử lý khi nhấn phím Enter trên ô nhập tin nhắn
-        private void txtMessage_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
-        {
-            if (e.Key == System.Windows.Input.Key.Enter)
+            while (true)
             {
-                // Tự động kích hoạt sự kiện nhấn nút Gửi tin
-                btnSend_Click(this, new RoutedEventArgs());
-            }
-        }
-
-        // 2. Bạn tìm đến hàm ClientLogic_OnPacketReceived sẵn có và chèn thêm dòng cuộn chữ này vào cuối:
-        private void ClientLogic_OnPacketReceived(NetworkPacket packet)
-        {
-            Dispatcher.Invoke(() =>
-            {
-                if (packet.Type == "CHAT")
+                try
                 {
-                    lstMessages.Items.Add($"{packet.Sender}: {packet.Content}");
-                    
-                    // Giúp tự động cuộn xuống dòng tin nhắn cuối cùng vừa nhận
-                    if (lstMessages.Items.Count > 0)
+                    int bytes = stream.Read(buffer, 0, buffer.Length);
+                    if (bytes <= 0) break;
+
+                    string msg = Encoding.UTF8.GetString(buffer, 0, bytes);
+
+                    Dispatcher.Invoke(() =>
                     {
-                        lstMessages.ScrollIntoView(lstMessages.Items[lstMessages.Items.Count - 1]);
-                    }
+                        lstMessages.Items.Add(msg);
+                    });
                 }
-            });
+                catch
+                {
+                    break;
+                }
+            }
+        }
+
+        // ================= GỬI TIN NHẮN =================
+        void SendMessage()
+        {
+            try
+            {
+                string msg = txtUsername.Text + ": " + txtMessage.Text;
+
+                byte[] data = Encoding.UTF8.GetBytes(msg);
+                stream.Write(data, 0, data.Length);
+
+                lstMessages.Items.Add(msg);
+
+                txtMessage.Clear();
+            }
+            catch
+            {
+                MessageBox.Show("Gửi thất bại!");
+            }
+        }
+
+        // ================= ENTER =================
+        private void txtMessage_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                SendMessage();
+            }
+        }
+
+        // ================= BUTTON SEND =================
+        private void btnSend_Click(object sender, RoutedEventArgs e)
+        {
+            SendMessage();
         }
     }
 }

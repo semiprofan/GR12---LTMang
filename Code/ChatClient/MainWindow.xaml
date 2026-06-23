@@ -1,38 +1,47 @@
 ﻿<Window x:Class="ChatClient.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:ChatClient"
-        mc:Ignorable="d"
-        Title="Phòng Chat Nhóm 12" Height="450" Width="600">
-    
+        Title="Phòng Chat Nhóm 12"
+        Height="450"
+        Width="600">
+
     <Grid Margin="10">
+
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Margin="0,0,0,10">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0" Text="Biệt danh của bạn:" VerticalAlignment="Center" FontWeight="Bold" Margin="0,0,10,0"/>
-            <TextBox Grid.Column="1" x:Name="txtUsername" Text="DatDao" Padding="5" VerticalAlignment="Center"/>
-        </Grid>
+        <!-- USERNAME -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBlock Text="Biệt danh:" VerticalAlignment="Center" FontWeight="Bold" Margin="0,0,10,0"/>
+            <TextBox x:Name="txtUsername" Width="150" Text="DatDao" Padding="5"/>
+        </StackPanel>
 
-        <ListBox Grid.Row="1" x:Name="lstMessages" Margin="0,0,0,10"/>
+        <!-- CHAT LIST -->
+        <ListBox x:Name="lstMessages" Grid.Row="1" Margin="0,0,0,10"/>
 
+        <!-- INPUT -->
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            
-            <TextBox Grid.Column="0" x:Name="txtMessage" VerticalAlignment="Center" Padding="5" Margin="0,0,5,0" KeyDown="txtMessage_KeyDown"/>
-            <Button Grid.Column="1" x:Name="btnSend" Content="Gửi tin" Width="80" Height="30" Click="btnSend_Click"/>
+
+            <TextBox x:Name="txtMessage"
+                     Grid.Column="0"
+                     Padding="5"
+                     Margin="0,0,5,0"
+                     KeyDown="txtMessage_KeyDown"/>
+
+            <Button x:Name="btnSend"
+                    Grid.Column="1"
+                    Content="Gửi"
+                    Width="80"
+                    Height="30"
+                    Click="btnSend_Click"/>
         </Grid>
+
     </Grid>
 </Window>
