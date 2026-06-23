@@ -5,8 +5,34 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ChatClient"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        Title="Phòng Chat Nhóm 12" Height="450" Width="600">
+    
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
+        <Grid Grid.Row="0" Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Biệt danh của bạn:" VerticalAlignment="Center" FontWeight="Bold" Margin="0,0,10,0"/>
+            <TextBox Grid.Column="1" x:Name="txtUsername" Text="DatDao" Padding="5" VerticalAlignment="Center"/>
+        </Grid>
+
+        <ListBox Grid.Row="1" x:Name="lstMessages" Margin="0,0,0,10"/>
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            
+            <TextBox Grid.Column="0" x:Name="txtMessage" VerticalAlignment="Center" Padding="5" Margin="0,0,5,0" KeyDown="txtMessage_KeyDown"/>
+            <Button Grid.Column="1" x:Name="btnSend" Content="Gửi tin" Width="80" Height="30" Click="btnSend_Click"/>
+        </Grid>
     </Grid>
 </Window>

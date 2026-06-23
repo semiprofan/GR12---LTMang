@@ -7,16 +7,15 @@ using System.Threading.Tasks;
 
 namespace ChatClient
 {
-    // 1. Định nghĩa cấu trúc gói tin để trao đổi với Server (Khánh)
+    // Định nghĩa duy nhất cho gói tin mạng
     public class NetworkPacket
     {
-        public string Type { get; set; } = string.Empty;       // "LOGIN", "CHAT_11", "LOGOUT"
-        public string Sender { get; set; } = string.Empty;     // Tên người gửi
-        public string Receiver { get; set; } = string.Empty;   // Tên người nhận (nếu chat 1-1)
-        public string Content { get; set; } = string.Empty;    // Nội dung tin nhắn
+        public string Type { get; set; } = string.Empty;       
+        public string Sender { get; set; } = string.Empty;     
+        public string Receiver { get; set; } = string.Empty;   
+        public string Content { get; set; } = string.Empty;    
     }
 
-    // 2. Lớp xử lý Logic mạng Máy khách của Đạt
     public class ChatClientLogic
     {
         private TcpClient? _client;
@@ -25,10 +24,8 @@ namespace ChatClient
         private StreamWriter? _writer;
         private bool _isConnected;
 
-        // Thêm dấu ? để cho phép sự kiện này có thể null khi chưa có UI đăng ký nhận
         public event Action<NetworkPacket>? OnPacketReceived;
 
-        // Hàm kết nối đến Server bất đồng bộ
         public async Task<bool> ConnectAsync(string ipAddress, int port)
         {
             try
@@ -41,8 +38,6 @@ namespace ChatClient
                 _writer = new StreamWriter(_stream, Encoding.UTF8) { AutoFlush = true };
 
                 _isConnected = true;
-
-                // Tạo một luồng chạy ngầm để liên tục lắng nghe phản hồi từ Server
                 _ = Task.Run(() => ListenFromServerAsync());
 
                 return true;
@@ -54,7 +49,6 @@ namespace ChatClient
             }
         }
 
-        // Hàm gửi tin nhắn/gói tin dạng JSON lên Server
         public async Task SendPacketAsync(NetworkPacket packet)
         {
             if (!_isConnected || _writer == null) return;
@@ -70,7 +64,6 @@ namespace ChatClient
             }
         }
 
-        // Luồng chạy ẩn thu thập dữ liệu thời gian thực từ Server
         private async Task ListenFromServerAsync()
         {
             try
