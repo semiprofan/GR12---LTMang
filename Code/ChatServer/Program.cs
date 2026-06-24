@@ -56,15 +56,24 @@ namespace ChatServer
                     string jsonReceived = await reader.ReadLineAsync();
                     if (jsonReceived == null) break;
 
-                    var packet = JsonSerializer.Deserialize<NetworkPacket>(jsonReceived);
-                    if (packet != null)
+                    try
                     {
-                        Console.WriteLine($"[{packet.Type}] {packet.Sender}: {packet.Content}");
+                        // Parse JSON động bằng JsonDocument để không bị lỗi lệch kiểu dữ liệu (NetworkPacket)
+                        using var doc = JsonDocument.Parse(jsonReceived);
+                        var root = doc.RootElement;
+                        string msgType = root.TryGetProperty("type", out var t) ? t.GetString() : "UNKNOWN";
+                        
+                        Console.WriteLine($"[Nhận] {jsonReceived}");
 
-                        if (packet.Type == "CHAT" || packet.Type == "LOGIN")
+                        // Kiểm tra nếu là các gói tin hợp lệ từ Client thì tiến hành Broadcast
+                        if (msgType == "message" || msgType == "join" || msgType == "leave" || msgType == "typing")
                         {
                             await BroadcastMessageAsync(jsonReceived);
                         }
+                    }
+                    catch 
+                    { 
+                        // Bỏ qua nếu gói tin nhận được bị lỗi định dạng JSON
                     }
                 }
             }
