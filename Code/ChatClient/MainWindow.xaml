@@ -1,47 +1,318 @@
 ﻿<Window x:Class="ChatClient.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Phòng Chat Nhóm 12"
-        Height="450"
-        Width="600">
+        Title="Phòng Chat – Nhóm 12"
+        Height="600" Width="800"
+        MinHeight="480" MinWidth="600"
+        Background="#1E1E2E">
 
-    <Grid Margin="10">
+    <Window.Resources>
+        <Color x:Key="Color.Gray900">#11111B</Color>
+        <Color x:Key="Color.Gray800">#181825</Color>
+        <Color x:Key="Color.Gray700">#1E1E2E</Color>
+        <Color x:Key="Color.Gray600">#313244</Color>
+        <Color x:Key="Color.Gray400">#6C7086</Color>
+        <Color x:Key="Color.Gray200">#CDD6F4</Color>
+        <Color x:Key="Color.Blue500">#89B4FA</Color>
+        <Color x:Key="Color.Blue600">#B4BEFE</Color>
+        <Color x:Key="Color.Blue700">#6C7EBF</Color>
+        <Color x:Key="Color.Green500">#A6E3A1</Color>
 
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+        <SolidColorBrush x:Key="Surface.Page" Color="{StaticResource Color.Gray700}"/>
+        <SolidColorBrush x:Key="Surface.Panel" Color="{StaticResource Color.Gray800}"/>
+        <SolidColorBrush x:Key="Surface.Input" Color="{StaticResource Color.Gray600}"/>
+        
+        <SolidColorBrush x:Key="Text.Primary" Color="{StaticResource Color.Gray200}"/>
+        <SolidColorBrush x:Key="Text.Secondary" Color="{StaticResource Color.Gray400}"/>
+        <SolidColorBrush x:Key="Text.Inverse" Color="{StaticResource Color.Gray900}"/>
+        
+        <SolidColorBrush x:Key="Action.Primary" Color="{StaticResource Color.Blue500}"/>
+        <SolidColorBrush x:Key="Action.PrimaryHover" Color="{StaticResource Color.Blue600}"/>
+        <SolidColorBrush x:Key="Action.PrimaryPressed" Color="{StaticResource Color.Blue700}"/>
+        
+        <SolidColorBrush x:Key="Status.Online" Color="{StaticResource Color.Green500}"/>
 
-        <!-- USERNAME -->
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
-            <TextBlock Text="Biệt danh:" VerticalAlignment="Center" FontWeight="Bold" Margin="0,0,10,0"/>
-            <TextBox x:Name="txtUsername" Width="150" Text="DatDao" Padding="5"/>
-        </StackPanel>
+        <Style x:Key="ThinScrollBar" TargetType="ScrollBar">
+            <Setter Property="Width" Value="6"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
 
-        <!-- CHAT LIST -->
-        <ListBox x:Name="lstMessages" Grid.Row="1" Margin="0,0,0,10"/>
+        <Style x:Key="MessageItem" TargetType="ListBoxItem">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0,4"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <ContentPresenter/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-        <!-- INPUT -->
-        <Grid Grid.Row="2">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
+        <Style x:Key="InputBox" TargetType="TextBox">
+            <Setter Property="Background" Value="{StaticResource Surface.Input}"/>
+            <Setter Property="Foreground" Value="{StaticResource Text.Primary}"/>
+            <Setter Property="CaretBrush" Value="{StaticResource Text.Primary}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
 
-            <TextBox x:Name="txtMessage"
-                     Grid.Column="0"
-                     Padding="5"
-                     Margin="0,0,5,0"
-                     KeyDown="txtMessage_KeyDown"/>
+        <Style x:Key="SendBtn" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource Action.Primary}"/>
+            <Setter Property="Foreground" Value="{StaticResource Text.Inverse}"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="8"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{StaticResource Action.PrimaryHover}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="{StaticResource Action.PrimaryPressed}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-            <Button x:Name="btnSend"
-                    Grid.Column="1"
-                    Content="Gửi"
-                    Width="80"
-                    Height="30"
-                    Click="btnSend_Click"/>
+        <Style x:Key="EmojiBtn" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="8"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{StaticResource Surface.Input}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="OnlineDot" TargetType="Ellipse">
+            <Setter Property="Width" Value="8"/>
+            <Setter Property="Height" Value="8"/>
+            <Setter Property="Fill" Value="{StaticResource Status.Online}"/>
+            <Setter Property="VerticalAlignment" Value="Bottom"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <!-- Sidebar -->
+            <ColumnDefinition Width="200"/>
+            <!-- Main chat -->
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- ======================== SIDEBAR ======================== -->
+        <Border Grid.Column="0" Background="#181825" BorderBrush="#313244" BorderThickness="0,0,1,0">
+            <DockPanel>
+
+                <!-- App title -->
+                <Border DockPanel.Dock="Top" Padding="16,14" Background="#11111B">
+                    <TextBlock Text="💬 Nhóm 12" Foreground="#CDD6F4"
+                               FontSize="15" FontWeight="Bold"/>
+                </Border>
+
+                <!-- Member count -->
+                <Border DockPanel.Dock="Top" Padding="16,8,16,4">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="THÀNH VIÊN —" Foreground="#6C7086"
+                                   FontSize="10" FontWeight="Bold"/>
+                        <TextBlock x:Name="txtMemberCount" Text=" 0" Foreground="#6C7086"
+                                   FontSize="10" FontWeight="Bold"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Member list -->
+                <ScrollViewer DockPanel.Dock="Top" VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel x:Name="pnlMembers" Margin="8,0,8,8"/>
+                </ScrollViewer>
+
+                <!-- My username at bottom -->
+                <Border DockPanel.Dock="Bottom" Padding="12,10" Background="#11111B">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Avatar -->
+                        <Border Grid.Column="0" Width="32" Height="32" CornerRadius="16"
+                                Background="#89B4FA" Margin="0,0,8,0">
+                            <TextBlock x:Name="txtAvatarInitial" Text="?" Foreground="#1E1E2E"
+                                       FontWeight="Bold" FontSize="14"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBox x:Name="txtUsername"
+                                     Text="Bạn"
+                                     Background="Transparent"
+                                     Foreground="#CDD6F4"
+                                     BorderThickness="0"
+                                     FontSize="13" FontWeight="SemiBold"
+                                     Padding="0"
+                                     TextChanged="txtUsername_TextChanged"/>
+                            <TextBlock Text="● Trực tuyến" Foreground="#A6E3A1" FontSize="10"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+            </DockPanel>
+        </Border>
+
+        <!-- ======================== MAIN CHAT ======================== -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <!-- Header -->
+                <RowDefinition Height="*"/>
+                <!-- Messages -->
+                <RowDefinition Height="Auto"/>
+                <!-- Typing indicator -->
+                <RowDefinition Height="Auto"/>
+                <!-- Emoji picker -->
+                <RowDefinition Height="Auto"/>
+                <!-- Input bar -->
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Border Grid.Row="0" Background="#181825" Padding="16,12" BorderBrush="#313244" BorderThickness="0,0,0,1">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="# chung" Foreground="#CDD6F4" FontSize="15" FontWeight="Bold" VerticalAlignment="Center"/>
+                    <TextBlock Text=" · " Foreground="#6C7086" FontSize="14" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="txtOnlineStatus" Text="0 trực tuyến"
+                               Foreground="#A6E3A1" FontSize="12" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Message list -->
+            <ListBox x:Name="lstMessages"
+                     Grid.Row="1"
+                     Background="Transparent"
+                     BorderThickness="0"
+                     Padding="12,8"
+                     ItemContainerStyle="{StaticResource MessageItem}"
+                     VirtualizingPanel.ScrollUnit="Pixel"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.Template>
+                    <ControlTemplate TargetType="ListBox">
+                        <ScrollViewer CanContentScroll="True"
+                                      VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled">
+                            <ItemsPresenter/>
+                        </ScrollViewer>
+                    </ControlTemplate>
+                </ListBox.Template>
+            </ListBox>
+
+            <!-- Typing indicator -->
+            <Border Grid.Row="2" Padding="16,4,16,0" Background="Transparent">
+                <TextBlock x:Name="txtTypingIndicator"
+                           Foreground="#89B4FA"
+                           FontSize="11"
+                           FontStyle="Italic"
+                           Text=""
+                           Visibility="Collapsed"/>
+            </Border>
+
+            <!-- Emoji picker popup -->
+            <Border x:Name="pnlEmojiPicker"
+                    Grid.Row="3"
+                    Background="#313244"
+                    CornerRadius="12"
+                    Margin="12,4,12,0"
+                    Padding="10,8"
+                    Visibility="Collapsed">
+                <WrapPanel x:Name="wrapEmoji"/>
+            </Border>
+
+            <!-- Input bar -->
+            <Border Grid.Row="4" Background="#181825" Padding="12,10" BorderBrush="#313244" BorderThickness="0,1,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <!-- Emoji toggle -->
+                        <ColumnDefinition Width="*"/>
+                        <!-- TextBox -->
+                        <ColumnDefinition Width="Auto"/>
+                        <!-- Send -->
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Emoji toggle button -->
+                    <Button x:Name="btnEmoji"
+                            Grid.Column="0"
+                            Style="{StaticResource EmojiBtn}"
+                            Content="😊"
+                            Margin="0,0,6,0"
+                            Click="btnEmoji_Click"
+                            ToolTip="Chọn emote"/>
+
+                    <!-- Message input -->
+                    <Border Grid.Column="1" Background="#313244" CornerRadius="10" Margin="0,0,8,0">
+                        <TextBox x:Name="txtMessage"
+                                 Style="{StaticResource InputBox}"
+                                 KeyDown="txtMessage_KeyDown"
+                                 TextChanged="txtMessage_TextChanged_Input"
+                                 Background="Transparent"/>
+                    </Border>
+
+                    <!-- Send button -->
+                    <Button x:Name="btnSend"
+                            Grid.Column="2"
+                            Style="{StaticResource SendBtn}"
+                            Content="Gửi"
+                            Width="64" Height="36"
+                            Padding="0"
+                            Click="btnSend_Click"/>
+                </Grid>
+            </Border>
         </Grid>
-
+    <Grid x:Name="pnlLoginOverlay" Background="#E611111B" Panel.ZIndex="100" Grid.ColumnSpan="2">
+            <Border Background="#181825" CornerRadius="12" BorderBrush="#313244" BorderThickness="1"
+                    HorizontalAlignment="Center" VerticalAlignment="Center" Padding="24,32" Width="320">
+                <StackPanel>
+                    <TextBlock Text="CHÀO MỪNG ĐẾN NHÓM 12" Foreground="#CDD6F4" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,24"/>
+                    
+                    <TextBlock Text="Tên hiển thị của bạn:" Foreground="#A6ADC8" FontSize="13" Margin="0,0,0,8"/>
+                    
+                    <TextBox x:Name="txtLoginName" Style="{StaticResource InputBox}" 
+                             Background="#1E1E2E" Margin="0,0,0,16" 
+                             KeyDown="txtLoginName_KeyDown"/>
+                    
+                    <Button x:Name="btnLogin" Style="{StaticResource SendBtn}" 
+                            Content="Tham gia phòng chat" Height="40" 
+                            Click="btnLogin_Click"/>
+                </StackPanel>
+            </Border>
+        </Grid>
     </Grid>
 </Window>
