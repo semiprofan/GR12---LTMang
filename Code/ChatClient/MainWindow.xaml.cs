@@ -97,11 +97,15 @@ namespace ChatClient
                 _reader = new StreamReader(ns, System.Text.Encoding.UTF8);
                 _writer = new StreamWriter(ns, System.Text.Encoding.UTF8) { AutoFlush = true };
 
-                // Announce join
-                SendJson(new { type = "join", username = txtUsername.Text });
-
+                // 1. CHUYỂN LÊN TRÊN: Khởi động luồng nghe tín hiệu từ Server TRƯỚC
                 var t = new Thread(ReceiveLoop) { IsBackground = true };
                 t.Start();
+
+                // 2. THÊM DÒNG NÀY: Dừng lại 50 mili-giây để đảm bảo luồng ReceiveLoop đã mở lên hoàn toàn
+                Thread.Sleep(50); 
+
+                // 3. CHUYỂN XUỐNG DƯỚI: Cuối cùng mới gửi gói tin Join báo hiệu cho Server
+                SendJson(new { type = "join", username = txtUsername.Text });
             }
             catch
             {

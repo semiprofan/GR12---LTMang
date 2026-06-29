@@ -12,7 +12,12 @@ namespace ChatServer
     class Program
     {
         private static TcpListener _listener;
-        private static List<StreamWriter> _clientWriters = new List<StreamWriter>();
+        
+        // Dùng Dictionary để map StreamWriter với Username của Client đó
+        private static Dictionary<StreamWriter, string> _activeUsers = new Dictionary<StreamWriter, string>();
+        
+        // TÍNH NĂNG MỚI: List lưu trữ lịch sử tin nhắn
+        private static List<string> _messageHistory = new List<string>();
 
         static async Task Main(string[] args)
         {
@@ -44,9 +49,10 @@ namespace ChatServer
             using var reader = new StreamReader(stream, Encoding.UTF8);
             using var writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
 
-            lock (_clientWriters)
+            // Tạm đăng ký Client mới với tên "Ẩn danh"
+            lock (_activeUsers)
             {
-                _clientWriters.Add(writer);
+                _activeUsers[writer] = "Ẩn danh";
             }
 
             try
@@ -58,43 +64,90 @@ namespace ChatServer
 
                     try
                     {
-                        // Parse JSON động bằng JsonDocument để không bị lỗi lệch kiểu dữ liệu (NetworkPacket)
                         using var doc = JsonDocument.Parse(jsonReceived);
                         var root = doc.RootElement;
                         string msgType = root.TryGetProperty("type", out var t) ? t.GetString() : "UNKNOWN";
-                        
-                        Console.WriteLine($"[Nhận] {jsonReceived}");
 
-                        // Kiểm tra nếu là các gói tin hợp lệ từ Client thì tiến hành Broadcast
-                        if (msgType == "message" || msgType == "join" || msgType == "leave" || msgType == "typing")
+                        if (msgType == "join")
+                        {
+                            string username = root.TryGetProperty("username", out var u) ? u.GetString() : "Ẩn danh";
+                            lock (_activeUsers)
+                            {
+                                _activeUsers[writer] = username;
+                            }
+
+                            // 1. ĐỒNG BỘ LỊCH SỬ: Gửi toàn bộ tin nhắn cũ cho riêng người mới vào
+                            List<string> historyCopy;
+                            lock (_messageHistory)
+                            {
+                                historyCopy = new List<string>(_messageHistory);
+                            }
+                            foreach (var oldMsg in historyCopy)
+                            {
+                                await writer.WriteLineAsync(oldMsg);
+                            }
+
+                            // 2. Báo cho phòng chat có người mới join
+                            await BroadcastMessageAsync(jsonReceived);
+
+                            // 3. Cập nhật lại số lượng và danh sách thanh Sidebar
+                            await BroadcastMemberListAsync();
+                        }
+                        else if (msgType == "message")
+                        {
+                            // LƯU LỊCH SỬ: Add tin nhắn vào List (Giới hạn 50 tin nhắn để nhẹ RAM)
+                            lock (_messageHistory)
+                            {
+                                _messageHistory.Add(jsonReceived);
+                                if (_messageHistory.Count > 50)
+                                    _messageHistory.RemoveAt(0);
+                            }
+                            await BroadcastMessageAsync(jsonReceived);
+                        }
+                        else if (msgType == "leave")
+                        {
+                            break; // Thoát vòng lặp để xuống khối finally xử lý
+                        }
+                        else if (msgType == "typing")
                         {
                             await BroadcastMessageAsync(jsonReceived);
                         }
                     }
-                    catch 
-                    { 
-                        // Bỏ qua nếu gói tin nhận được bị lỗi định dạng JSON
+                    catch
+                    {
+                        // Bỏ qua nếu lỗi parse JSON
                     }
                 }
             }
             catch {}
             finally
             {
-                lock (_clientWriters)
+                string username = "Ẩn danh";
+                lock (_activeUsers)
                 {
-                    _clientWriters.Remove(writer);
+                    if (_activeUsers.TryGetValue(writer, out var name))
+                    {
+                        username = name;
+                    }
+                    _activeUsers.Remove(writer);
                 }
+                
                 client.Close();
-                Console.WriteLine($"[-] Client {clientInfo} đã rời phòng chat.");
+                Console.WriteLine($"[-] Client {clientInfo} ({username}) đã rời phòng chat.");
+
+                // Thông báo có người rời đi và cập nhật lại Sidebar
+                var leavePayload = JsonSerializer.Serialize(new { type = "leave", username = username });
+                await BroadcastMessageAsync(leavePayload);
+                await BroadcastMemberListAsync();
             }
         }
 
         private static async Task BroadcastMessageAsync(string jsonMessage)
         {
             List<StreamWriter> targets;
-            lock (_clientWriters)
+            lock (_activeUsers)
             {
-                targets = new List<StreamWriter>(_clientWriters);
+                targets = new List<StreamWriter>(_activeUsers.Keys);
             }
 
             foreach (var writer in targets)
@@ -102,6 +155,29 @@ namespace ChatServer
                 try
                 {
                     await writer.WriteLineAsync(jsonMessage);
+                }
+                catch {}
+            }
+        }
+
+        private static async Task BroadcastMemberListAsync()
+        {
+            string jsonList;
+            List<StreamWriter> targets;
+
+            lock (_activeUsers)
+            {
+                var usernames = new List<string>(_activeUsers.Values);
+                var payload = new { type = "members", users = usernames };
+                jsonList = JsonSerializer.Serialize(payload);
+                targets = new List<StreamWriter>(_activeUsers.Keys);
+            }
+
+            foreach (var writer in targets)
+            {
+                try
+                {
+                    await writer.WriteLineAsync(jsonList);
                 }
                 catch {}
             }
