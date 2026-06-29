@@ -97,11 +97,12 @@ namespace ChatClient
                 _reader = new StreamReader(ns, System.Text.Encoding.UTF8);
                 _writer = new StreamWriter(ns, System.Text.Encoding.UTF8) { AutoFlush = true };
 
-                // Announce join
-                SendJson(new { type = "join", username = txtUsername.Text });
-
                 var t = new Thread(ReceiveLoop) { IsBackground = true };
                 t.Start();
+
+                Thread.Sleep(50); 
+
+                SendJson(new { type = "join", username = txtUsername.Text });
             }
             catch
             {
