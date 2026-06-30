@@ -11,26 +11,24 @@ namespace ChatServer
 {
     class Program
     {
-        private static TcpListener _listener;
-        
         // Dùng Dictionary để map StreamWriter với Username của Client đó
-        private static Dictionary<StreamWriter, string> _activeUsers = new Dictionary<StreamWriter, string>();
+        private static readonly Dictionary<StreamWriter, string> _activeUsers = new Dictionary<StreamWriter, string>();
         
         // TÍNH NĂNG MỚI: List lưu trữ lịch sử tin nhắn
-        private static List<string> _messageHistory = new List<string>();
+        private static readonly List<string> _messageHistory = new List<string>();
 
         static async Task Main(string[] args)
         {
             Console.OutputEncoding = Encoding.UTF8;
-            _listener = new TcpListener(IPAddress.Any, 5000);
-            _listener.Start();
+            var listener = new TcpListener(IPAddress.Any, 5000);
+            listener.Start();
             Console.WriteLine("=== CHAT SERVER TCP ĐÃ KHỞI CHẠY TẠI PORT 5000 ===");
 
             try
             {
                 while (true)
                 {
-                    TcpClient client = await _listener.AcceptTcpClientAsync();
+                    TcpClient client = await listener.AcceptTcpClientAsync();
                     _ = Task.Run(() => HandleClientAsync(client));
                 }
             }
@@ -42,7 +40,7 @@ namespace ChatServer
 
         private static async Task HandleClientAsync(TcpClient client)
         {
-            string clientInfo = client.Client.RemoteEndPoint.ToString();
+            string clientInfo = client.Client.RemoteEndPoint?.ToString() ?? "unknown endpoint";
             Console.WriteLine($"[+] Client kết nối mới từ: {clientInfo}");
 
             using NetworkStream stream = client.GetStream();
@@ -59,18 +57,18 @@ namespace ChatServer
             {
                 while (true)
                 {
-                    string jsonReceived = await reader.ReadLineAsync();
+                    string? jsonReceived = await reader.ReadLineAsync();
                     if (jsonReceived == null) break;
 
                     try
                     {
                         using var doc = JsonDocument.Parse(jsonReceived);
                         var root = doc.RootElement;
-                        string msgType = root.TryGetProperty("type", out var t) ? t.GetString() : "UNKNOWN";
+                        string msgType = GetStringOrDefault(root, "type", "UNKNOWN");
 
                         if (msgType == "join")
                         {
-                            string username = root.TryGetProperty("username", out var u) ? u.GetString() : "Ẩn danh";
+                            string username = GetStringOrDefault(root, "username", "Ẩn danh");
                             lock (_activeUsers)
                             {
                                 _activeUsers[writer] = username;
@@ -181,6 +179,14 @@ namespace ChatServer
                 }
                 catch {}
             }
+        }
+
+        private static string GetStringOrDefault(JsonElement root, string propertyName, string defaultValue)
+        {
+            if (!root.TryGetProperty(propertyName, out var property))
+                return defaultValue;
+
+            return property.GetString() ?? defaultValue;
         }
     }
 }
