@@ -206,12 +206,31 @@
 
             <!-- Header -->
             <Border Grid.Row="0" Background="#181825" Padding="16,12" BorderBrush="#313244" BorderThickness="0,0,0,1">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="# chung" Foreground="#CDD6F4" FontSize="15" FontWeight="Bold" VerticalAlignment="Center"/>
-                    <TextBlock Text=" · " Foreground="#6C7086" FontSize="14" VerticalAlignment="Center"/>
-                    <TextBlock x:Name="txtOnlineStatus" Text="0 trực tuyến"
-                               Foreground="#A6E3A1" FontSize="12" VerticalAlignment="Center"/>
-                </StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                        <TextBlock Text="# chung" Foreground="#CDD6F4" FontSize="15" FontWeight="Bold" VerticalAlignment="Center"/>
+                        <TextBlock Text=" · " Foreground="#6C7086" FontSize="14" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="txtOnlineStatus" Text="0 trực tuyến"
+                                   Foreground="#A6E3A1" FontSize="12" VerticalAlignment="Center"/>
+                        <TextBlock Text=" · " Foreground="#6C7086" FontSize="14" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="txtServerStatus" Text="Chưa kết nối"
+                                   Foreground="#F38BA8" FontSize="12" VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <Button x:Name="btnDisconnect"
+                            Grid.Column="1"
+                            Style="{StaticResource SendBtn}"
+                            Content="Ngắt kết nối"
+                            Width="104" Height="30"
+                            Padding="0"
+                            IsEnabled="False"
+                            Click="btnDisconnect_Click"/>
+                </Grid>
             </Border>
 
             <!-- Message list -->
@@ -296,20 +315,55 @@
                 </Grid>
             </Border>
         </Grid>
-    <Grid x:Name="pnlLoginOverlay" Background="#E611111B" Panel.ZIndex="100" Grid.ColumnSpan="2">
+        <Grid x:Name="pnlLoginOverlay" Background="#E611111B" Panel.ZIndex="100" Grid.ColumnSpan="2">
             <Border Background="#181825" CornerRadius="12" BorderBrush="#313244" BorderThickness="1"
-                    HorizontalAlignment="Center" VerticalAlignment="Center" Padding="24,32" Width="320">
+                    HorizontalAlignment="Center" VerticalAlignment="Center" Padding="24,32" Width="360">
                 <StackPanel>
-                    <TextBlock Text="CHÀO MỪNG ĐẾN NHÓM 12" Foreground="#CDD6F4" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,24"/>
+                    <TextBlock Text="KẾT NỐI SERVER CHAT" Foreground="#CDD6F4" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                    <TextBlock Text="Nhập thông tin server trước khi tham gia phòng"
+                               Foreground="#6C7086" FontSize="12"
+                               HorizontalAlignment="Center" Margin="0,0,0,24"/>
                     
                     <TextBlock Text="Tên hiển thị của bạn:" Foreground="#A6ADC8" FontSize="13" Margin="0,0,0,8"/>
                     
                     <TextBox x:Name="txtLoginName" Style="{StaticResource InputBox}" 
-                             Background="#1E1E2E" Margin="0,0,0,16" 
+                             Background="#1E1E2E" Margin="0,0,0,14" 
                              KeyDown="txtLoginName_KeyDown"/>
+
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="92"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                            <TextBlock Text="Server IP:" Foreground="#A6ADC8" FontSize="13" Margin="0,0,0,8"/>
+                            <TextBox x:Name="txtServerIp"
+                                     Style="{StaticResource InputBox}"
+                                     Text="127.0.0.1"
+                                     Background="#1E1E2E"
+                                     KeyDown="txtLoginName_KeyDown"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Port:" Foreground="#A6ADC8" FontSize="13" Margin="0,0,0,8"/>
+                            <TextBox x:Name="txtServerPort"
+                                     Style="{StaticResource InputBox}"
+                                     Text="5000"
+                                     Background="#1E1E2E"
+                                     KeyDown="txtLoginName_KeyDown"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock x:Name="txtConnectionStatus"
+                               Text="Chưa kết nối"
+                               Foreground="#F38BA8"
+                               FontSize="12"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,14"/>
                     
-                    <Button x:Name="btnLogin" Style="{StaticResource SendBtn}" 
-                            Content="Tham gia phòng chat" Height="40" 
+                    <Button x:Name="btnLogin" Style="{StaticResource SendBtn}"
+                            Content="Kết nối và tham gia" Height="40"
                             Click="btnLogin_Click"/>
                 </StackPanel>
             </Border>
