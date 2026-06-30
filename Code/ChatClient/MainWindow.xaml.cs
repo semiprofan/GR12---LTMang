@@ -16,14 +16,15 @@ namespace ChatClient
     public partial class MainWindow : Window
     {
         // ── Network ──────────────────────────────────────────────
-        TcpClient _client;
-        StreamReader _reader;
-        StreamWriter _writer;
+        TcpClient? _client;
+        StreamReader? _reader;
+        StreamWriter? _writer;
 
         // ── State ────────────────────────────────────────────────
         readonly Dictionary<string, bool> _members = new();   // username → isTyping flag (not used directly, just tracking presence)
         readonly DispatcherTimer _typingTimer = new();        // debounce "stop typing" notification
         bool _isTyping = false;
+        bool _isConnected = false;
 
         // ── Emojis ───────────────────────────────────────────────
         static readonly string[] Emojis = {
@@ -38,6 +39,7 @@ namespace ChatClient
             InitializeComponent();
             BuildEmojiPicker();
             SetupTypingTimer();
+            SetConnectedState(false, "Chưa kết nối");
             // Connect();
             txtLoginName.Focus();
         }
@@ -86,16 +88,17 @@ namespace ChatClient
 
         // ======================== NETWORK ========================
 
-        void Connect()
+        bool Connect(string host, int port)
         {
             try
             {
                 _client = new TcpClient();
-                _client.Connect("127.0.0.1", 5000);
+                _client.Connect(host, port);
 
                 var ns = _client.GetStream();
                 _reader = new StreamReader(ns, System.Text.Encoding.UTF8);
                 _writer = new StreamWriter(ns, System.Text.Encoding.UTF8) { AutoFlush = true };
+                SetConnectedState(true, $"Đã kết nối {host}:{port}");
 
                 var t = new Thread(ReceiveLoop) { IsBackground = true };
                 t.Start();
@@ -103,12 +106,64 @@ namespace ChatClient
                 Thread.Sleep(50); 
 
                 SendJson(new { type = "join", username = txtUsername.Text });
+                AddSystemMessage($"Đã kết nối server {host}:{port}.");
+                return true;
             }
-            catch
+            catch (Exception ex)
             {
-                MessageBox.Show("Không kết nối được Server!", "Lỗi kết nối",
+                DisconnectFromServer(sendLeave: false, showMessage: false);
+                txtConnectionStatus.Text = $"Không kết nối được: {ex.Message}";
+                txtConnectionStatus.Foreground = new SolidColorBrush(Color.FromRgb(0xF3, 0x8B, 0xA8));
+                MessageBox.Show("Không kết nối được Server! Vui lòng kiểm tra IP/Port và chạy ChatServer trước.", "Lỗi kết nối",
                                 MessageBoxButton.OK, MessageBoxImage.Warning);
+                return false;
             }
+        }
+
+        void DisconnectFromServer(bool sendLeave = true, bool showMessage = true)
+        {
+            try
+            {
+                if (sendLeave && _writer != null)
+                    SendJson(new { type = "leave", username = txtUsername.Text });
+
+                _writer?.Close();
+                _reader?.Close();
+                _client?.Close();
+            }
+            catch { }
+            finally
+            {
+                _writer = null;
+                _reader = null;
+                _client = null;
+                _isTyping = false;
+                _typingTimer.Stop();
+                _members.Clear();
+                SetConnectedState(false, "Đã ngắt kết nối");
+                RefreshMemberPanel();
+
+                if (showMessage)
+                    AddSystemMessage("Đã ngắt kết nối server.");
+            }
+        }
+
+        void SetConnectedState(bool isConnected, string status)
+        {
+            _isConnected = isConnected;
+            txtServerStatus.Text = status;
+            txtServerStatus.Foreground = new SolidColorBrush(isConnected
+                ? Color.FromRgb(0xA6, 0xE3, 0xA1)
+                : Color.FromRgb(0xF3, 0x8B, 0xA8));
+
+            txtConnectionStatus.Text = status;
+            txtConnectionStatus.Foreground = txtServerStatus.Foreground;
+
+            btnDisconnect.IsEnabled = isConnected;
+            btnSend.IsEnabled = isConnected;
+            btnEmoji.IsEnabled = isConnected;
+            txtMessage.IsEnabled = isConnected;
+            txtMessage.Opacity = isConnected ? 1 : 0.55;
         }
 
         // ======================== RECEIVE LOOP ========================
@@ -117,16 +172,16 @@ namespace ChatClient
         {
             try
             {
-                while (true)
+                while (_isConnected)
                 {
-                    string line = _reader?.ReadLine();
+                    string? line = _reader?.ReadLine();
                     if (line == null) break;
 
                     try
                     {
                         using var doc = JsonDocument.Parse(line);
                         var root = doc.RootElement;
-                        string type = root.TryGetProperty("type", out var t) ? t.GetString() : "";
+                        string type = GetStringOrDefault(root, "type", "");
 
                         switch (type)
                         {
@@ -158,7 +213,12 @@ namespace ChatClient
 
             Dispatcher.Invoke(() =>
             {
-                AddSystemMessage("⚠ Mất kết nối với server.");
+                if (_isConnected)
+                {
+                    DisconnectFromServer(sendLeave: false, showMessage: false);
+                    pnlLoginOverlay.Visibility = Visibility.Visible;
+                    AddSystemMessage("⚠ Mất kết nối với server.");
+                }
             });
         }
 
@@ -166,10 +226,9 @@ namespace ChatClient
 
         void HandleMessage(JsonElement root)
         {
-            string user = root.TryGetProperty("username", out var u) ? u.GetString() : "?";
-            string text = root.TryGetProperty("text", out var tx) ? tx.GetString() : "";
-            string time = root.TryGetProperty("time", out var tm) ? tm.GetString()
-                          : DateTime.Now.ToString("HH:mm");
+            string user = GetStringOrDefault(root, "username", "?");
+            string text = GetStringOrDefault(root, "text", "");
+            string time = GetStringOrDefault(root, "time", DateTime.Now.ToString("HH:mm"));
 
             // Đưa toàn bộ phần đụng tới UI vào trong Invoke
             Dispatcher.Invoke(() =>
@@ -183,7 +242,7 @@ namespace ChatClient
 
         void HandleTyping(JsonElement root)
         {
-            string user = root.TryGetProperty("username", out var u) ? u.GetString() : "";
+            string user = GetStringOrDefault(root, "username", "");
             bool isTyping = root.TryGetProperty("isTyping", out var f) && f.GetBoolean();
 
             Dispatcher.Invoke(() =>
@@ -205,7 +264,7 @@ namespace ChatClient
 
         void HandleJoin(JsonElement root)
         {
-            string user = root.TryGetProperty("username", out var u) ? u.GetString() : "?";
+            string user = GetStringOrDefault(root, "username", "?");
             Dispatcher.Invoke(() =>
             {
                 _members[user] = false;
@@ -216,7 +275,7 @@ namespace ChatClient
 
         void HandleLeave(JsonElement root)
         {
-            string user = root.TryGetProperty("username", out var u) ? u.GetString() : "?";
+            string user = GetStringOrDefault(root, "username", "?");
             Dispatcher.Invoke(() =>
             {
                 _members.Remove(user);
@@ -233,7 +292,11 @@ namespace ChatClient
                 _members.Clear();
                 if (root.TryGetProperty("users", out var arr))
                     foreach (var item in arr.EnumerateArray())
-                        _members[item.GetString()] = false;
+                    {
+                        string? name = item.GetString();
+                        if (!string.IsNullOrWhiteSpace(name))
+                            _members[name] = false;
+                    }
 
                 RefreshMemberPanel();
             });
@@ -424,7 +487,7 @@ namespace ChatClient
 
         void SendMessage()
         {
-            if (_writer == null) return;
+            if (!_isConnected || _writer == null) return;
             string text = txtMessage.Text.Trim();
             if (string.IsNullOrEmpty(text)) return;
 
@@ -460,6 +523,13 @@ namespace ChatClient
         // ======================== EVENT HANDLERS ========================
 
         private void btnSend_Click(object sender, RoutedEventArgs e) => SendMessage();
+
+        private void btnDisconnect_Click(object sender, RoutedEventArgs e)
+        {
+            DisconnectFromServer();
+            pnlLoginOverlay.Visibility = Visibility.Visible;
+            txtLoginName.Focus();
+        }
 
         private void txtMessage_KeyDown(object sender, KeyEventArgs e)
         {
@@ -528,16 +598,17 @@ namespace ChatClient
             return palette[idx];
         }
 
+        static string GetStringOrDefault(JsonElement root, string propertyName, string defaultValue)
+        {
+            if (!root.TryGetProperty(propertyName, out var property))
+                return defaultValue;
+
+            return property.GetString() ?? defaultValue;
+        }
+
         protected override void OnClosed(EventArgs e)
         {
-            try
-            {
-                SendJson(new { type = "leave", username = txtUsername.Text });
-                _writer?.Close();
-                _reader?.Close();
-                _client?.Close();
-            }
-            catch { }
+            DisconnectFromServer(sendLeave: true, showMessage: false);
             base.OnClosed(e);
         }
         // ======================== LOGIN LOGIC ========================
@@ -565,14 +636,36 @@ namespace ChatClient
                 return;
             }
 
+            string host = txtServerIp.Text.Trim();
+            if (string.IsNullOrEmpty(host))
+            {
+                MessageBox.Show("Vui lòng nhập địa chỉ IP của server!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                txtServerIp.Focus();
+                return;
+            }
+
+            if (!int.TryParse(txtServerPort.Text.Trim(), out int port) || port < 1 || port > 65535)
+            {
+                MessageBox.Show("Port phải là số từ 1 đến 65535!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                txtServerPort.Focus();
+                return;
+            }
+
             // Gán tên vào giao diện chính
             txtUsername.Text = name;
-            
-            // Ẩn màn hình đăng nhập đi
-            pnlLoginOverlay.Visibility = Visibility.Collapsed;
 
-            // BÂY GIỜ MỚI BẮT ĐẦU KẾT NỐI SERVER
-            Connect();
+            txtConnectionStatus.Text = "Đang kết nối...";
+            txtConnectionStatus.Foreground = new SolidColorBrush(Color.FromRgb(0x89, 0xB4, 0xFA));
+            btnLogin.IsEnabled = false;
+
+            bool connected = Connect(host, port);
+            btnLogin.IsEnabled = true;
+
+            if (!connected) return;
+
+            // Ẩn màn hình đăng nhập sau khi kết nối thành công
+            pnlLoginOverlay.Visibility = Visibility.Collapsed;
+            txtMessage.Focus();
         }
     }
 }
