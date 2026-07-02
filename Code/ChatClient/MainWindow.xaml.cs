@@ -15,25 +15,25 @@ namespace ChatClient
 {
     public partial class MainWindow : Window
     {
-        // ── Network ──────────────────────────────────────────────
+       
         TcpClient? _client;
         StreamReader? _reader;
         StreamWriter? _writer;
 
-        // ── State ────────────────────────────────────────────────
+      
         readonly Dictionary<string, bool> _members = new();   // username → isTyping flag (not used directly, just tracking presence)
         readonly DispatcherTimer _typingTimer = new();        // debounce "stop typing" notification
         bool _isTyping = false;
         bool _isConnected = false;
 
-        // ── Emojis ───────────────────────────────────────────────
+        
         static readonly string[] Emojis = {
             "😊","😂","😍","🥰","😎","😭","😅","🤔","😤","🥺",
             "👍","👏","🙏","💪","🤝","❤️","🔥","✨","🎉","💯",
             "😆","😜","🤣","😇","🙄","😏","🤩","😴","🤯","😱"
         };
 
-        // ─────────────────────────────────────────────────────────
+       
         public MainWindow()
         {
             InitializeComponent();
@@ -230,11 +230,11 @@ namespace ChatClient
             string text = GetStringOrDefault(root, "text", "");
             string time = GetStringOrDefault(root, "time", DateTime.Now.ToString("HH:mm"));
 
-            // Đưa toàn bộ phần đụng tới UI vào trong Invoke
+            
             Dispatcher.Invoke(() =>
             {
                 bool isSelf = user == txtUsername.Text;
-                if (isSelf) return; // Chặn dội ngược tin nhắn
+                if (isSelf) return; 
 
                 AddChatBubble(user, text, time, isSelf);
             });
@@ -247,7 +247,7 @@ namespace ChatClient
 
             Dispatcher.Invoke(() =>
             {
-                if (user == txtUsername.Text) return; // Bỏ qua nếu là chính mình
+                if (user == txtUsername.Text) return; 
 
                 if (isTyping)
                 {
@@ -389,7 +389,7 @@ namespace ChatClient
             lstMessages.ScrollIntoView(item);
         }
 
-        /// <summary>Adds a centered system message (join/leave/disconnect).</summary>
+       
         void AddSystemMessage(string text)
         {
             var tb = new TextBlock
@@ -407,7 +407,7 @@ namespace ChatClient
             lstMessages.ScrollIntoView(item);
         }
 
-        /// <summary>Rebuilds the member sidebar list.</summary>
+       
         void RefreshMemberPanel()
         {
             pnlMembers.Children.Clear();
@@ -423,7 +423,7 @@ namespace ChatClient
                 row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
                 row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-                // Avatar with dot
+                
                 var avatarGrid = new Grid { Width = 34, Height = 34, Margin = new Thickness(0, 0, 8, 0) };
                 var circle = new Border
                 {
@@ -483,7 +483,7 @@ namespace ChatClient
             }
         }
 
-        // ======================== SEND ========================
+        
 
         void SendMessage()
         {
@@ -495,13 +495,13 @@ namespace ChatClient
             string user = txtUsername.Text.Trim();
             if (string.IsNullOrEmpty(user)) user = "Ẩn danh";
 
-            // Send to server
+          
             SendJson(new { type = "message", username = user, text, time });
 
-            // Show own bubble immediately (optimistic)
+           
             AddChatBubble(user, text, time, isSelf: true);
 
-            // Stop typing signal
+          
             _isTyping = false;
             _typingTimer.Stop();
             SendJson(new { type = "typing", username = user, isTyping = false });
@@ -520,7 +520,7 @@ namespace ChatClient
             catch { /* ignore send errors */ }
         }
 
-        // ======================== EVENT HANDLERS ========================
+        
 
         private void btnSend_Click(object sender, RoutedEventArgs e) => SendMessage();
 
@@ -578,12 +578,12 @@ namespace ChatClient
                 : Visibility.Visible;
         }
 
-        // ======================== UTILITIES ========================
+        
 
-        /// <summary>Deterministic pastel color per username.</summary>
+        
         static Color GetUserColor(string name)
         {
-            // Cycle through a set of Catppuccin-style accent colors
+           
             Color[] palette = {
                 Color.FromRgb(0x89, 0xB4, 0xFA), // blue
                 Color.FromRgb(0xA6, 0xE3, 0xA1), // green
@@ -611,7 +611,7 @@ namespace ChatClient
             DisconnectFromServer(sendLeave: true, showMessage: false);
             base.OnClosed(e);
         }
-        // ======================== LOGIN LOGIC ========================
+       
 
         private void btnLogin_Click(object sender, RoutedEventArgs e)
         {
@@ -651,7 +651,7 @@ namespace ChatClient
                 return;
             }
 
-            // Gán tên vào giao diện chính
+           
             txtUsername.Text = name;
 
             txtConnectionStatus.Text = "Đang kết nối...";
@@ -663,7 +663,7 @@ namespace ChatClient
 
             if (!connected) return;
 
-            // Ẩn màn hình đăng nhập sau khi kết nối thành công
+           
             pnlLoginOverlay.Visibility = Visibility.Collapsed;
             txtMessage.Focus();
         }

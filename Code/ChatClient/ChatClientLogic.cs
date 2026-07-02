@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace ChatClient
 {
-    // Định nghĩa duy nhất cho gói tin mạng
+    
     public class NetworkPacket
     {
         public string Type { get; set; } = string.Empty;       
