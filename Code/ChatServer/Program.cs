@@ -11,10 +11,8 @@ namespace ChatServer
 {
     class Program
     {
-        // Dùng Dictionary để map StreamWriter với Username của Client đó
         private static readonly Dictionary<StreamWriter, string> _activeUsers = new Dictionary<StreamWriter, string>();
         
-        // TÍNH NĂNG MỚI: List lưu trữ lịch sử tin nhắn
         private static readonly List<string> _messageHistory = new List<string>();
 
         static async Task Main(string[] args)
@@ -47,7 +45,6 @@ namespace ChatServer
             using var reader = new StreamReader(stream, Encoding.UTF8);
             using var writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
 
-            // Tạm đăng ký Client mới với tên "Ẩn danh"
             lock (_activeUsers)
             {
                 _activeUsers[writer] = "Ẩn danh";
@@ -74,7 +71,6 @@ namespace ChatServer
                                 _activeUsers[writer] = username;
                             }
 
-                            // 1. ĐỒNG BỘ LỊCH SỬ: Gửi toàn bộ tin nhắn cũ cho riêng người mới vào
                             List<string> historyCopy;
                             lock (_messageHistory)
                             {
@@ -85,15 +81,12 @@ namespace ChatServer
                                 await writer.WriteLineAsync(oldMsg);
                             }
 
-                            // 2. Báo cho phòng chat có người mới join
                             await BroadcastMessageAsync(jsonReceived);
 
-                            // 3. Cập nhật lại số lượng và danh sách thanh Sidebar
                             await BroadcastMemberListAsync();
                         }
                         else if (msgType == "message")
                         {
-                            // LƯU LỊCH SỬ: Add tin nhắn vào List (Giới hạn 50 tin nhắn để nhẹ RAM)
                             lock (_messageHistory)
                             {
                                 _messageHistory.Add(jsonReceived);
@@ -104,7 +97,7 @@ namespace ChatServer
                         }
                         else if (msgType == "leave")
                         {
-                            break; // Thoát vòng lặp để xuống khối finally xử lý
+                            break;
                         }
                         else if (msgType == "typing")
                         {
@@ -113,7 +106,6 @@ namespace ChatServer
                     }
                     catch
                     {
-                        // Bỏ qua nếu lỗi parse JSON
                     }
                 }
             }
@@ -133,7 +125,6 @@ namespace ChatServer
                 client.Close();
                 Console.WriteLine($"[-] Client {clientInfo} ({username}) đã rời phòng chat.");
 
-                // Thông báo có người rời đi và cập nhật lại Sidebar
                 var leavePayload = JsonSerializer.Serialize(new { type = "leave", username = username });
                 await BroadcastMessageAsync(leavePayload);
                 await BroadcastMemberListAsync();
